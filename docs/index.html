@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FlyRank Content Refresh Priority Prediction</title>
+
+<style>
+body{
+    font-family:Arial,Helvetica,sans-serif;
+    max-width:1000px;
+    margin:auto;
+    padding:40px;
+    line-height:1.7;
+    background:#fafafa;
+    color:#222;
+}
+h1,h2{
+    color:#0b5ed7;
+}
+.section{
+    margin-top:50px;
+}
+code{
+    background:#eee;
+    padding:2px 6px;
+}
+table{
+    border-collapse:collapse;
+    margin-top:15px;
+    margin-bottom:15px;
+    width:100%;
+}
+th,td{
+    border:1px solid #ccc;
+    padding:8px 12px;
+    text-align:left;
+}
+th{
+    background:#eef4ff;
+}
+img{
+    max-width:100%;
+    margin-top:15px;
+    margin-bottom:10px;
+    border:1px solid #ddd;
+    border-radius:4px;
+}
+footer{
+    margin-top:60px;
+    border-top:1px solid #ddd;
+    padding-top:20px;
+}
+</style>
+
+</head>
+
+<body>
+
+<h1>FlyRank Content Refresh Priority Prediction using Machine Learning</h1>
+
+<p><b>Author:</b> Nandini Bhatt</p>
+
+<div class="section">
+<h2>Abstract</h2>
+
+<p>
+This project develops a machine learning system for identifying website content that should be refreshed based on historical performance signals.
+Historical engagement, traffic, CTR, keyword and trend features are used to predict refresh priority.
+Multiple supervised learning models were evaluated and compared against a rule-based baseline.
+The Random Forest model achieved the best validation performance and was selected for generating the final refresh queue.
+The resulting recommendations are intended to support editorial decision-making rather than automate content publishing.
+</p>
+
+</div>
+
+<div class="section">
+<h2>Introduction</h2>
+
+<p>
+Large content websites contain thousands of pages that cannot all be reviewed manually.
+This project investigates whether machine learning can prioritize pages that are most likely to benefit from content refresh using historical performance metrics.
+The goal is to help editorial teams focus their review efforts on high-impact pages while keeping humans in the decision loop.
+</p>
+
+</div>
+
+<div class="section">
+<h2>Research Question</h2>
+
+<p>
+Can a machine learning model rank content pages by refresh priority using historical performance metrics?
+</p>
+
+</div>
+
+<div class="section">
+<h2>Data</h2>
+
+<p>
+The project uses the FlyRank Content Refresh Dataset containing anonymized historical content performance metrics across 30,000 content items and 32 clients.
+The dataset contains engagement, traffic, CTR, keyword and trend-related features drawn from trailing 90-day performance windows.
+Client and content identifiers are pseudonymized, and no private URLs, queries, or client names are included anywhere in this project.
+</p>
+
+<p>
+Rows with missing or invalid engagement history were excluded from training. Trend-derived columns (<code>trend_direction</code>,
+<code>trend_pct</code>) were excluded from the feature set entirely, since the target label is itself derived from these columns —
+including them would leak the label into the features.
+</p>
+
+</div>
+
+<div class="section">
+<h2>Methodology</h2>
+
+<p>
+The target label, <code>is_declining_label</code>, identifies content items whose performance trend is declining. Missing values
+were handled during preprocessing, and leakage-related features (see Data section) were removed before training.
+</p>
+
+<p>
+Several supervised machine learning models — Logistic Regression, Decision Tree, and Random Forest — were trained and evaluated
+using a <b>client-holdout validation split</b> (20% of clients held out entirely from training) to prevent client-level leakage
+between train and test sets. All models were compared against a transparent, rule-based baseline scorer on the same split and
+the same metrics. The model with the strongest validation performance (Precision@50) was selected to generate the final ranked
+refresh queue.
+</p>
+
+</div>
+
+<div class="section">
+<h2>Results</h2>
+
+<table>
+<tr><th>Model</th><th>ROC AUC</th><th>Avg Precision</th><th>Precision@50</th><th>Recall</th><th>F1</th></tr>
+<tr><td>Baseline (rules)</td><td>0.627</td><td>0.468</td><td>0.240</td><td>-</td><td>-</td></tr>
+<tr><td>Logistic Regression</td><td>0.700</td><td>0.522</td><td>0.400</td><td>0.567</td><td>0.566</td></tr>
+<tr><td>Decision Tree</td><td>0.742</td><td>0.575</td><td>0.540</td><td>0.716</td><td>0.634</td></tr>
+<tr><td><b>Random Forest (selected)</b></td><td><b>0.750</b></td><td><b>0.618</b></td><td><b>0.740</b></td><td><b>0.744</b></td><td><b>0.640</b></td></tr>
+</table>
+
+<p>
+Random Forest improved Precision@50 from 0.240 (baseline) to 0.740 — a substantial gain in ranking quality among the top-50
+flagged pages. It was selected as the final model based on this metric, and used to generate the ranked refresh queue with
+per-item confidence scores.
+</p>
+
+<img src="../outputs/charts/top_feature_importance.svg" alt="Top feature importance chart">
+<img src="../outputs/charts/action_mix.svg" alt="Action mix distribution chart">
+<img src="../outputs/charts/confidence_mix.svg" alt="Confidence score distribution">
+
+</div>
+
+<div class="section">
+<h2>Limitations</h2>
+
+<ul>
+<li>The model predicts refresh priority, not guaranteed business impact — a "declining" label is not a guarantee that a refresh will improve performance.</li>
+<li>Performance depends on historical data quality and may shift if user behavior or search algorithms change.</li>
+<li>Editorial review is still required before updating content; recommendations are decision-support, not automation.</li>
+</ul>
+
+</div>
+
+<div class="section">
+<h2>Ranked Recommendations</h2>
+
+<p>
+High-confidence pages should be reviewed first.
+Medium-confidence pages should be manually inspected.
+Low-confidence pages can be monitored for future review.
+The system is designed to assist editors rather than replace human judgment.
+</p>
+
+</div>
+
+<div class="section">
+<h2>Reproducibility</h2>
+
+<p>
+Full code and analysis: <a href="https://github.com/nandini3206/flyrank-ml-internship" target="_blank">GitHub repository</a>.
+The complete implementation, notebooks, and scripts are available there — running
+<code>work/notebooks/capstone.ipynb</code> reproduces the preprocessing, model training, and refresh queue generation
+end to end.
+</p>
+
+</div>
+
+<div class="section">
+<h2>Acknowledgments & Data Credit</h2>
+
+<p>
+Built on the <a href="https://flyrank.ai" target="_blank">FlyRank ML Internship Dataset</a>.
+The dataset and project resources were provided as part of the FlyRank Machine Learning Internship.
+</p>
+
+</div>
+
+<footer>
+
+<p>
+© 2026 Nandini Bhatt
+</p>
+
+</footer>
+
+</body>
+</html>
